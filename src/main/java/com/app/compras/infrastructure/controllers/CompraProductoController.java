@@ -12,8 +12,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.app.compras.application.services.ICompraProductoService;
+import com.app.compras.application.services.ICompraService;
+import com.app.compras.application.services.IProductoService;
+import com.app.compras.domain.entity.Compra;
 import com.app.compras.domain.entity.CompraProducto;
 import com.app.compras.domain.entity.CompraProductoId;
+import com.app.compras.domain.entity.Producto;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,44 +32,60 @@ public class CompraProductoController {
     @Autowired
     private ICompraProductoService compraProductoService;
 
+    @Autowired
+    private ICompraService compraService;
+
+    @Autowired
+    private IProductoService productoService;
+
+    // Obtener todas las compras de productos
     @GetMapping
     public List<CompraProducto> list() {
         return compraProductoService.findAll();
     }
-    
-    @GetMapping("/{idCompraProducto}")
-    public ResponseEntity<?> view(@PathVariable CompraProductoId id) {
+
+    // Obtener una compra de producto por su clave compuesta
+    @GetMapping("/{idCompra}/{idProducto}")
+    public ResponseEntity<?> view(@PathVariable int idCompra, @PathVariable int idProducto) {
+        CompraProductoId id = new CompraProductoId(idCompra, idProducto);
         Optional<CompraProducto> compraProductoOptional = compraProductoService.findById(id);
-        if (compraProductoOptional.isPresent()){
-            return ResponseEntity.ok(compraProductoOptional.orElseThrow());
+        if (compraProductoOptional.isPresent()) {
+            return ResponseEntity.ok(compraProductoOptional.get());
         }
         return ResponseEntity.notFound().build();
     }
 
+    // Crear una nueva compra de producto
     @PostMapping
     public ResponseEntity<?> create(@RequestBody CompraProducto compraProducto) {
+        Optional<Compra> service = compraService.findById(compraProducto.getId().getIdCompra());
+        Optional<Producto> supply = productoService.findById(compraProducto.getId().getIdProducto());
+        compraProducto.setCompra(service.orElseThrow());
+        compraProducto.setProducto(supply.orElseThrow());
         return ResponseEntity.status(HttpStatus.CREATED).body(compraProductoService.save(compraProducto));
     }
-    
-    @PutMapping("/{idCompraProducto}")
-    public ResponseEntity<?> update(@RequestBody CompraProducto compraProducto, @PathVariable CompraProductoId id) {
+
+    // Actualizar una compra de producto existente
+    @PutMapping("/{idCompra}/{idProducto}")
+    public ResponseEntity<?> update(@RequestBody CompraProducto compraProducto, @PathVariable int idCompra,
+            @PathVariable int idProducto) {
+        CompraProductoId id = new CompraProductoId(idCompra, idProducto);
         Optional<CompraProducto> compraProductoOptional = compraProductoService.update(id, compraProducto);
-        if (compraProductoOptional.isPresent()){
-            return ResponseEntity.status(HttpStatus.CREATED).body(compraProductoOptional.orElseThrow());
+        if (compraProductoOptional.isPresent()) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(compraProductoOptional.get());
         }
         return ResponseEntity.notFound().build();
     }
 
-    @DeleteMapping("/{idCompraProducto}")
-    public ResponseEntity<?> delete(@PathVariable CompraProductoId id) {
-        Optional<CompraProducto> compraProductoOptional = compraProductoService.findById(id);
-        if (!compraProductoOptional.isPresent()){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("");
+    // Eliminar una compra de producto por su clave compuesta
+    @DeleteMapping("/{idCompra}/{idProducto}")
+    public ResponseEntity<?> delete(@PathVariable int idCompra, @PathVariable int idProducto) {
+        CompraProductoId id = new CompraProductoId(idCompra, idProducto);
+        Optional<CompraProducto> compraProductoOptional = compraProductoService.delete(id);
+        if (compraProductoOptional.isPresent()) {
+            return ResponseEntity.ok(compraProductoOptional.get());
         }
-        Optional<CompraProducto> compraProductoElminado = compraProductoService.delete(id);
-        if (compraProductoElminado.isPresent()){
-            return ResponseEntity.ok(compraProductoElminado.orElseThrow());
-        }
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("");
+        return ResponseEntity.notFound().build();
     }
+
 }
