@@ -32,6 +32,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/compra")
 @CrossOrigin(origins = "http://localhost:5173")
+
 @Tag(name = "Compras", description = "API para la gestión de compras")
 public class CompraController {
     @Autowired
