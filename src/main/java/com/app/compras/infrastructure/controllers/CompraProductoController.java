@@ -19,6 +19,16 @@ import com.app.compras.domain.entity.CompraProducto;
 import com.app.compras.domain.entity.CompraProductoId;
 import com.app.compras.domain.entity.Producto;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,6 +38,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 @RestController
 @RequestMapping("/api/compraProducto")
 @CrossOrigin(origins = "http://localhost:5173")
+@Tag(name = "Compras-Productos", description = "API para la gestión de productos en compras")
 public class CompraProductoController {
     @Autowired
     private ICompraProductoService compraProductoService;
@@ -38,15 +49,26 @@ public class CompraProductoController {
     @Autowired
     private IProductoService productoService;
 
-    // Obtener todas las compras de productos
+    @Operation(summary = "Obtener todos los detalles de compras", description = "Devuelve una lista de todos los productos incluidos en compras")
+    @ApiResponse(responseCode = "200", description = "Lista recuperada correctamente", 
+                content = @Content(array = @ArraySchema(schema = @Schema(implementation = CompraProducto.class))))
     @GetMapping
     public List<CompraProducto> list() {
         return compraProductoService.findAll();
     }
 
-    // Obtener una compra de producto por su clave compuesta
+    @Operation(summary = "Obtener un detalle de compra específico", description = "Devuelve un detalle específico de compra según su ID compuesto")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Detalle de compra encontrado", 
+                    content = @Content(schema = @Schema(implementation = CompraProducto.class))),
+        @ApiResponse(responseCode = "404", description = "Detalle de compra no encontrado")
+    })
     @GetMapping("/{idCompra}/{idProducto}")
-    public ResponseEntity<?> view(@PathVariable int idCompra, @PathVariable int idProducto) {
+    public ResponseEntity<?> view(
+            @Parameter(description = "ID de la compra", required = true, example = "1")
+            @PathVariable int idCompra, 
+            @Parameter(description = "ID del producto", required = true, example = "2")
+            @PathVariable int idProducto) {
         CompraProductoId id = new CompraProductoId(idCompra, idProducto);
         Optional<CompraProducto> compraProductoOptional = compraProductoService.findById(id);
         if (compraProductoOptional.isPresent()) {
@@ -55,19 +77,42 @@ public class CompraProductoController {
         return ResponseEntity.notFound().build();
     }
 
-    // Crear una nueva compra de producto
+    @Operation(summary = "Crear un nuevo detalle de compra", description = "Agrega un producto a una compra existente")
+    @ApiResponse(responseCode = "201", description = "Detalle de compra creado correctamente", 
+                content = @Content(schema = @Schema(implementation = CompraProducto.class)))
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody CompraProducto compraProducto) {
-        Optional<Compra> service = compraService.findById(compraProducto.getId().getIdCompra());
-        Optional<Producto> supply = productoService.findById(compraProducto.getId().getIdProducto());
-        compraProducto.setCompra(service.orElseThrow());
-        compraProducto.setProducto(supply.orElseThrow());
+    public ResponseEntity<?> create(
+            @Parameter(description = "Datos del detalle de compra a crear", required = true)
+            @Valid @RequestBody CompraProducto compraProducto) {
+        Optional<Compra> compra = compraService.findById(compraProducto.getId().getIdCompra());
+        Optional<Producto> producto = productoService.findById(compraProducto.getId().getIdProducto());
+        
+        if (!compra.isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("La compra especificada no existe");
+        }
+        
+        if (!producto.isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El producto especificado no existe");
+        }
+        
+        compraProducto.setCompra(compra.orElseThrow());
+        compraProducto.setProducto(producto.orElseThrow());
         return ResponseEntity.status(HttpStatus.CREATED).body(compraProductoService.save(compraProducto));
     }
 
-    // Actualizar una compra de producto existente
+    @Operation(summary = "Actualizar un detalle de compra existente", description = "Actualiza los datos de un detalle de compra identificado por su ID compuesto")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Detalle de compra actualizado correctamente", 
+                    content = @Content(schema = @Schema(implementation = CompraProducto.class))),
+        @ApiResponse(responseCode = "404", description = "Detalle de compra no encontrado")
+    })
     @PutMapping("/{idCompra}/{idProducto}")
-    public ResponseEntity<?> update(@RequestBody CompraProducto compraProducto, @PathVariable int idCompra,
+    public ResponseEntity<?> update(
+            @Parameter(description = "Datos actualizados del detalle de compra", required = true)
+            @Valid @RequestBody CompraProducto compraProducto, 
+            @Parameter(description = "ID de la compra", required = true, example = "1")
+            @PathVariable int idCompra,
+            @Parameter(description = "ID del producto", required = true, example = "2")
             @PathVariable int idProducto) {
         CompraProductoId id = new CompraProductoId(idCompra, idProducto);
         Optional<CompraProducto> compraProductoOptional = compraProductoService.update(id, compraProducto);
@@ -77,9 +122,18 @@ public class CompraProductoController {
         return ResponseEntity.notFound().build();
     }
 
-    // Eliminar una compra de producto por su clave compuesta
+    @Operation(summary = "Eliminar un detalle de compra", description = "Elimina un detalle de compra existente según su ID compuesto")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Detalle de compra eliminado correctamente", 
+                    content = @Content(schema = @Schema(implementation = CompraProducto.class))),
+        @ApiResponse(responseCode = "404", description = "Detalle de compra no encontrado")
+    })
     @DeleteMapping("/{idCompra}/{idProducto}")
-    public ResponseEntity<?> delete(@PathVariable int idCompra, @PathVariable int idProducto) {
+    public ResponseEntity<?> delete(
+            @Parameter(description = "ID de la compra", required = true, example = "1")
+            @PathVariable int idCompra, 
+            @Parameter(description = "ID del producto", required = true, example = "2")
+            @PathVariable int idProducto) {
         CompraProductoId id = new CompraProductoId(idCompra, idProducto);
         Optional<CompraProducto> compraProductoOptional = compraProductoService.delete(id);
         if (compraProductoOptional.isPresent()) {
@@ -87,5 +141,4 @@ public class CompraProductoController {
         }
         return ResponseEntity.notFound().build();
     }
-
 }
