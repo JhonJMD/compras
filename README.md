@@ -3,7 +3,6 @@
 ![Java](https://img.shields.io/badge/Java-17-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-brightgreen)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-blue)
-![License](https://img.shields.io/badge/License-MIT-green)
 
 > Una API RESTful desarrollada con Spring Boot para gestionar compras, productos, categorías y clientes.
 
