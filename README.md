@@ -7,22 +7,7 @@
 
 > Una API RESTful desarrollada con Spring Boot para gestionar compras, productos, categorías y clientes.
 
-## 📋 Tabla de Contenidos
-
-- [Descripción](#descripción)
-- [Tecnologías](#tecnologías)
-- [Estructura del Proyecto](#estructura-del-proyecto)
-- [Requisitos](#requisitos)
-- [Instalación](#instalación)
-- [Configuración](#configuración)
-- [Uso](#uso)
-- [Documentación de API](#documentación-de-api)
-- [Diagrama de Entidades](#diagrama-de-entidades)
-- [Guía de Usuario](#guía-de-usuario)
-- [Contribución](#contribución)
-- [Licencia](#👨‍💻)
-
-## 📝 Descripción
+## 📝Descripción
 
 Este sistema de gestión permite la administración completa del proceso de compras, desde el mantenimiento de catálogos de productos organizados por categorías, hasta la gestión de clientes y sus transacciones. La aplicación implementa una arquitectura basada en principios de Clean Architecture y sigue patrones de diseño REST.
 
